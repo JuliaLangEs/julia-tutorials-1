@@ -13,13 +13,13 @@ world = EarthMoonSystem(0., earth, moon, command_module)
 
 function simulate()
 
-    boost = 15.
+    boost = 15. # in m/s
     position_list = Vector{Float64}[] # in m
     current_time = 1.
     h = .1 # initial step size in s
     h_new = h # adaptive step size of the next step in s
     mcc2_burn_done = false
-    corrective_burn_done = false
+    dps1_burn_done = false
 
     while current_time <= TOTAL_DURATION
 
@@ -33,8 +33,8 @@ function simulate()
         end
 
         # increase velocity for corrective boost
-        if !corrective_burn_done && current_time >= 212100
-            println("corrective_burn fired")
+        if !dps1_burn_done && current_time >= 212100
+            println("dps1_burn fired")
             world.command_module.velocity += boost / norm(world.command_module.velocity) * world.command_module.velocity
             corrective_burn_done = true
         end
@@ -44,7 +44,7 @@ function simulate()
         velocityE = world.command_module.velocityE
         velocityH = world.command_module.velocityH
 
-        error_amt = norm(position - positionH) + TOTAL_DURATION * norm(velocityE - velocityH)
+        error_amt = norm(positionE - positionH) + TOTAL_DURATION * norm(velocityE - velocityH)
         h_new = min(.5 * MARKER_TIME, max(.1, h * sqrt(TOLERANCE / error_amt))) # restrict step size to reasonable range
 
         current_time += h
