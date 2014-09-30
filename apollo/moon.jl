@@ -8,7 +8,7 @@ function moon_position(time::Float64)
     return [x, y]
 end
 
-function update(me::Moon, time::Float64)
+function update(me::Moon, time)
 
     me.position = moon_position(time)
     return me
