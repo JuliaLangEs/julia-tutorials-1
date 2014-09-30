@@ -44,7 +44,7 @@ function simulate()
         velocityE = world.command_module.velocityE
         velocityH = world.command_module.velocityH
 
-        error_amt = norm(position - positionH) + TOTAL_DURATION * norm(velocityE - velocityH)
+        error_amt = norm(positionE - positionH) + TOTAL_DURATION * norm(velocityE - velocityH)
         h_new = min(.5 * MARKER_TIME, max(.1, h * sqrt(TOLERANCE / error_amt))) # restrict step size to reasonable range
 
         current_time += h
