@@ -33,7 +33,7 @@ prev_arrival = 0 # first arrival is at time = 0
 # Generaterandom numbers to represent arrival and service times
 for i = 1:max_arrivals
 
-    prev_arrival = random_gaussian(mean_iat, std_dev_iat)
+    prev_arrival += random_gaussian(mean_iat, std_dev_iat)
     prev_los = random_gaussian(mean_los, std_dev_los)
 
     # Push random values into the arrays

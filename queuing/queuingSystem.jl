@@ -87,7 +87,7 @@ function run_to_end(qs::Queuing_System)
         warm_up(qs)
     end
 
-    while qs.sim_time < qs.run_time
+    while qs.sim_time < qs.warm_up_time + qs.run_time
         next_event(qs)
     end
 end
@@ -96,7 +96,7 @@ end
 function next_event(qs::Queuing_System)
 
     # If we have customers arriving before the next customer exits
-    if qs.next_arrival <- qs.next_exit
+    if qs.next_arrival <= qs.next_exit
 
         # Update the sim time to the time at which the next customer arrives
         qs.sim_time = qs.next_arrival
@@ -114,17 +114,12 @@ function next_event(qs::Queuing_System)
             # when the available server finishes processing its next customer
             qs.next_completion[qs.open_server] = qs.sim_time + next_service(qs)
 
-            speak(qs, strcat("Customer arrived at server ",
-                qs.open_server,
-                " will be done at ",
-                qs.next_completion[qs.open_server]))
-
+            speak(qs, "Customer arrived at server $(qs.open_server) will be done at $(qs.next_completion[qs.open_server])")
         else
 
             # If we have more customers in the system than servers,
             # customers will have to wait in the queue
             speak(qs, "Customer arrived and is waiting in line")
-
         end
 
     else
@@ -140,7 +135,7 @@ function next_event(qs::Queuing_System)
         # Set this to a dummy variable
         qs.next_completion[qs.next_to_complete] = typemax(Int)
 
-        speak(qs, strcat("Person exited from server ", qs.next_to_complete))
+        speak(qs, "Person exited from server $(qs.next_to_complete)")
 
         # If we have more customers in the system than servers
         if qs.in_system >= qs.servers
@@ -148,10 +143,7 @@ function next_event(qs::Queuing_System)
             # when the next available server finishes processing its current customer
             qs.next_completion[qs.next_to_complete] = qs.sim_time + next_service(qs)
 
-            speak(qs, strcat("Customer exited line to see server ",
-                qs.next_to_complete,
-                " will be done at ",
-                qs.next_completion[qs.next_to_complete]))
+            speak(qs, "Customer exited line to see server $(qs.next_to_complete) will be done at $(qs.next_completion[qs.next_to_complete])")
         end
     end
 
@@ -199,7 +191,7 @@ end
 # Outputs time and a message
 function speak(qs::Queuing_System, words::String)
     if qs.warmed_up
-        println(strcat(qs.sim_time, ": ", words))
+        println("$(qs.sim_time) : $words")
     end
 end
 
