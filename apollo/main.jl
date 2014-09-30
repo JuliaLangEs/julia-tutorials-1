@@ -1,3 +1,5 @@
+using Debug
+
 using constants
 using types
 include("physics.jl")
@@ -11,6 +13,7 @@ moon = Moon(MM, [0., 0.], RM, moon_position(0.))
 command_module = Command_Module(MCM, INITIAL_VELOCITY, 5., INITIAL_POSITION, INITIAL_POSITION, INITIAL_POSITION, INITIAL_VELOCITY, INITIAL_VELOCITY)
 world = EarthMoonSystem(0., earth, moon, command_module)
 
+@debug
 function simulate()
 
     boost = 15. # in m/s
@@ -41,6 +44,7 @@ function simulate()
 
         positionE = world.command_module.positionE
         positionH = world.command_module.positionH
+        @bp
         velocityE = world.command_module.velocityE
         velocityH = world.command_module.velocityH
 

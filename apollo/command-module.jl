@@ -2,7 +2,8 @@
 function acceleration(time::Float64, pos::Vector{Float64})
 
     moon_pos = moon_position(time)
-    distance_from_earth = pos - moon_pos
+    distance_from_earth = pos
+    distance_to_moon = pos - moon_pos
     mag_e = magnitude(distance_from_earth)
     mag_m = magnitude(distance_to_moon)
 
@@ -12,8 +13,8 @@ end
 function update(me::Command_Module, time::Float64, h::Float64)
 
     acceleration0 = acceleration(time, me.position)
-    velocityE = me.velocity + h*acceleration0 # Euler's velocity
-    positionE = me.position + h*me.velocity # Euler's position
+    velocityE = me.velocity + h * acceleration0 # Euler's velocity
+    positionE = me.position + h * me.velocity # Euler's position
 
     # Heun's method
     # looks ahead to the next step and averages the two values
