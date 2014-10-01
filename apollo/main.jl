@@ -1,5 +1,5 @@
-using Debug
-
+using Gadfly
+using DataFrames
 using constants
 using types
 include("physics.jl")
@@ -13,7 +13,6 @@ moon = Moon(MM, [0., 0.], RM, moon_position(0.))
 command_module = Command_Module(MCM, INITIAL_VELOCITY, 5., INITIAL_POSITION, INITIAL_POSITION, INITIAL_POSITION, INITIAL_VELOCITY, INITIAL_VELOCITY)
 world = EarthMoonSystem(0., earth, moon, command_module)
 
-@debug
 function simulate()
 
     boost = 15. # in m/s
@@ -31,7 +30,7 @@ function simulate()
         # reduce velocity if mcc2 burn fired
         if !mcc2_burn_done && current_time >= 101104
             println("mcc2_burn fired")
-            world.command_module.velocity -= 7.04 / norm(world.command_module.velocity) * world.command_module_velocity
+            world.command_module.velocity -= 7.04 / norm(world.command_module.velocity) * world.command_module.velocity
             mcc2_burn_done = true
         end
 
@@ -39,12 +38,11 @@ function simulate()
         if !dps1_burn_done && current_time >= 212100
             println("dps1_burn fired")
             world.command_module.velocity += boost / norm(world.command_module.velocity) * world.command_module.velocity
-            corrective_burn_done = true
+            dps1_burn_done = true
         end
 
         positionE = world.command_module.positionE
         positionH = world.command_module.positionH
-        @bp
         velocityE = world.command_module.velocityE
         velocityH = world.command_module.velocityH
 
@@ -64,3 +62,7 @@ println("starting")
 @time pos = simulate()
 println(typeof(pos))
 writecsv("output.csv", pos)
+
+set_default_plot_size(9inch, 9inch/golden);
+
+
