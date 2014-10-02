@@ -32,5 +32,25 @@ function is_divisible(n, i)
     return n % i == 0
 end
 
-println(is_prime(100))
-println(is_prime(17))
+
+function get_prime(n::Int64)
+
+    count_primes = 0 # initialize count of primes
+    num = 1 # initialize integer to check if prime
+
+    # loop until we find the n'th prime
+    while count_primes <= n
+
+        # check if we found a prime number
+        if is_prime(num)
+            count_primes += 1
+        end
+
+        num += 1
+    end
+
+    return num - 1
+end
+
+println("The sixth prime number is $(get_prime(6))")
+println("The 10,001st prime number is $(get_prime(10001))")
