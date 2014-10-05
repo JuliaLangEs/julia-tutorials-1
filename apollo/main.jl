@@ -65,4 +65,11 @@ writecsv("output.csv", pos)
 
 set_default_plot_size(9inch, 9inch/golden);
 
+xpos = [x[1] for x in pos]
+ypos = [y[2] for y in pos]
+
+p = plot(x = xpos, y = ypos, Geom.point, Geom.smooth)
+display(p)
+
+
 
