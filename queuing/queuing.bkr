@@ -1,0 +1,70 @@
+{
+    "beaker": "2",
+    "evaluators": [
+        {
+            "name": "Html",
+            "plugin": "Html",
+            "view": {
+                "cm": {
+                    "mode": "htmlmixed"
+                }
+            }
+        },
+        {
+            "name": "Latex",
+            "plugin": "Latex",
+            "view": {
+                "cm": {
+                    "mode": "stex"
+                }
+            }
+        },
+        {
+            "name": "JavaScript",
+            "plugin": "JavaScript",
+            "jsSetting2": "",
+            "jsSetting1": "",
+            "view": {
+                "cm": {
+                    "mode": "javascript",
+                    "background": "#FFE0F0"
+                }
+            }
+        },
+        {
+            "name": "Julia",
+            "plugin": "Julia",
+            "imports": "",
+            "supplementalClassPath": "",
+            "view": {
+                "cm": {
+                    "mode": "julia"
+                }
+            }
+        }
+    ],
+    "cells": [
+        {
+            "id": "codetMEo6y",
+            "type": "code",
+            "evaluator": "Julia",
+            "input": {
+                "body": "function random_gaussian(mean::Float64, std_dev::Float64)\n    mean + (rand() - .5) * std_dev\nend\n\n\ntype Queuing_System\n\n    # variables set by creator\n    arrival_times::Array{Float64, 1}\n    service_times::Array{Float64, 1}\n    warm_up_time::Float64\n    run_time::Float64\n    servers::Int\n\n    # variables set by constructor\n    sim_time::Float64\n    warmed_up::Bool\n    in_system::Int\n    arrival_index::Int\n    service_index::Int\n    next_to_complete::Int\n    open_server::Int\n    next_completion::Array{Float64, 1} # by server\n    next_arrival::Float64\n    next_exit::Float64\n\n    # constructor\n    function Queuing_System(arrival_times::Array{Float64, 1},\n            service_times::Array{Float64, 1},\n            warm_up_time::Float64,\n            run_time::Float64,\n            servers::Int)\n\n        sim_time = 0.\n        warmed_up = false\n        in_system = 0\n        arrival_index = 2\n        service_index = 1\n\n        next_to_complete = typemax(Int)\n        open_server = 1\n\n        next_completion = fill(typemax(Int), servers)\n\n        next_arrival = arrival_times[1]\n        next_exit = typemax(Int)\n\n        new(arrival_times,\n            service_times,\n            warm_up_time,\n            run_time,\n            servers,\n            sim_time,\n            warmed_up,\n            in_system,\n            arrival_index,\n            service_index,\n            next_to_complete,\n            open_server,\n            next_completion,\n            next_arrival,\n            next_exit)\n    end\nend\n\n\n# \"Warm up\" time for the model\nfunction warm_up(qs::Queuing_System)\n    println(\"Warming up\")\n    while qs.sim_time < qs.warm_up_time\n        next_event(qs)\n    end\n    qs.warmed_up = true\n    println(\"Warmed up\")\nend\n\n\nfunction run_to_end(qs::Queuing_System)\n\n    # let model warm up\n    if !qs.warmed_up\n        warm_up(qs)\n    end\n\n    while qs.sim_time < qs.warm_up_time + qs.run_time\n        next_event(qs)\n    end\nend\n\n\nfunction next_event(qs::Queuing_System)\n\n    # If we have customers arriving before the next customer exits\n    if qs.next_arrival <= qs.next_exit\n\n        # Update the sim time to the time at which the next customer arrives\n        qs.sim_time = qs.next_arrival\n\n        # Increment the number of customers in the system\n        qs.in_system += 1\n\n        # Get the next arrival after this one\n        qs.next_arrival = next_arrival(qs)\n\n        # If we have fewer customers in the system than servers,\n        # we process the next customer\n        if qs.in_system <= qs.servers\n\n            # when the available server finishes processing its next customer\n            qs.next_completion[qs.open_server] = qs.sim_time + next_service(qs)\n\n            speak(qs, \"Customer arrived at server $(qs.open_server) will be done at $(qs.next_completion[qs.open_server])\")\n        else\n\n            # If we have more customers in the system than servers,\n            # customers will have to wait in the queue\n            speak(qs, \"Customer arrived and is waiting in line\")\n        end\n\n    else\n\n        # A customer is exiting before the next arrival\n\n        # set sim time to the time of the next exit\n        qs.sim_time = qs.next_exit\n\n        # Decrement the number of customers in the system\n        qs.in_system -= 1\n\n        # Set this to a dummy variable\n        qs.next_completion[qs.next_to_complete] = typemax(Int)\n\n        speak(qs, \"Person exited from server $(qs.next_to_complete)\")\n\n        # If we have more customers in the system than servers\n        if qs.in_system >= qs.servers\n\n            # when the next available server finishes processing its current customer\n            qs.next_completion[qs.next_to_complete] = qs.sim_time + next_service(qs)\n\n            speak(qs, \"Customer exited line to see server $(qs.next_to_complete) will be done at $(qs.next_completion[qs.next_to_complete])\")\n        end\n    end\n\n    qs.next_exit = typemax(Int)\n    qs.next_to_complete = -1\n    qs.open_server = -1\n\n    # Loop through each server\n    for i = 1:qs.servers\n\n        # If this server will finish before our current next_exit\n        if qs.next_completion[i] < qs.next_exit\n\n            # Set the next exit time to that of server i\n            qs.next_exit = qs.next_completion[i]\n\n            # Designate this server as the next server to complete\n            qs.next_to_complete = i\n        end\n\n        # Set an open server if one is available\n        if qs.next_completion[i] == typemax(Int) && qs.open_server == -1\n            qs.open_server = i\n        end\n    end\nend\n\n\n# Gets the next arrival time\nfunction next_arrival(qs::Queuing_System)\n    val = qs.arrival_times[qs.arrival_index]\n    qs.arrival_index += 1\n    return val\nend\n\n\n# Gets the next service time\nfunction next_service(qs::Queuing_System)\n    val = qs.service_times[qs.service_index]\n    qs.service_index += 1\n    return val\nend\n\n\n# Outputs time and a message\nfunction speak(qs::Queuing_System, words::String)\n    if qs.warmed_up\n        println(\"$(qs.sim_time) : $words\")\n    end\nend"
+            },
+            "output": {},
+            "evaluatorReader": true,
+            "lineCount": 191
+        },
+        {
+            "id": "codeCsWDnQ",
+            "type": "code",
+            "evaluator": "Julia",
+            "input": {
+                "body": "\n# Model times\nwarm_up_time = 4320. # in s\nrun_time = 20160. # in s\n\n# Standard deviation = mean * coefficient of variance\ncoeff_of_variance = 1\n\n# Average arrival time\nmean_iat = 3. # in s\n\n# Average length of service\nmean_los = 9. # in s\n\n# Number of servers\nnum_servers = 4\n\n\n# Standard deviation in length of service\nstd_dev_los = mean_los * coeff_of_variance\n\n# Standard deviation in arrival time\nstd_dev_iat = mean_iat * coeff_of_variance\n\n# Initialize vectors for arrival and service times\narrival_times = Float64[]\nservice_times = Float64[]\n\nmax_arrivals = 15000 # simulate no more than 15,000 customers\nprev_arrival = 0 # first arrival is at time = 0\n\n# Generaterandom numbers to represent arrival and service times\nfor i = 1:max_arrivals\n\n    prev_arrival += random_gaussian(mean_iat, std_dev_iat)\n    prev_los = random_gaussian(mean_los, std_dev_los)\n\n    # Push random values into the arrays\n    arrival_times = push!(arrival_times, prev_arrival)\n    service_times = push!(service_times, prev_los)\nend\n\n# Create queuing system\nqs = Queuing_System(arrival_times, service_times, warm_up_time, run_time, num_servers)\n\n# Run simulation\nrun_to_end(qs)"
+            },
+            "output": {},
+            "evaluatorReader": true,
+            "lineCount": 47
+        }
+    ]
+}
